@@ -58,7 +58,8 @@ echo "--> Mouting plugin"
 vault secrets enable -path=ipfs -plugin-name=ipfs plugin
 
 echo "--> Reading out"
-vault read -field=Data ipfs/object/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB
+vault read -field=Data ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme \
+  | base64 -D
 
 echo "==> Ready!"
 wait $!

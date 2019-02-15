@@ -2,8 +2,10 @@ package ipfs
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
@@ -15,12 +17,16 @@ var objectFields = map[string]*framework.FieldSchema{
 		Type:        framework.TypeString,
 		Description: "DAG node to pull and serialize from IPFS",
 	},
+	"link": &framework.FieldSchema{
+		Type:        framework.TypeString,
+		Description: "optional link of DAG node to pull",
+	},
 }
 
 func objectPaths(b *IPFSBackend) []*framework.Path {
 	return []*framework.Path{
 		&framework.Path{
-			Pattern:      "object/" + framework.GenericNameRegex("key"),
+			Pattern:      "object/" + framework.GenericNameRegex("key") + framework.OptionalParamRegex("link"),
 			HelpSynopsis: "Return an IPFS DAG node",
 			Fields:       objectFields,
 			Callbacks: map[logical.Operation]framework.OperationFunc{
@@ -46,12 +52,19 @@ func (b *IPFSBackend) pathObjectGet(ctx context.Context, req *logical.Request, d
 
 	sh := shell.NewShell(ipfsAddr)
 
-	cid := d.Get("key").(string)
+	key := d.Get("key").(string)
+	link := d.Get("link").(string)
+	if link != "" {
+		key = strings.TrimRight(key+"/"+link, "/")
+	}
 
-	object, err := sh.ObjectGet(cid)
+	object, err := sh.ObjectGet(key)
 	if err != nil {
 		return nil, logical.CodedError(http.StatusNotFound, err.Error())
 	}
+
+	// base64 encode payload and update in-place
+	object.Data = base64.StdEncoding.EncodeToString([]byte(object.Data))
 
 	var data map[string]interface{}
 	jsonBytes, err := json.Marshal(object)
@@ -73,9 +86,13 @@ func (b *IPFSBackend) pathObjectLinks(ctx context.Context, req *logical.Request,
 
 	sh := shell.NewShell(ipfsAddr)
 
-	cid := d.Get("key").(string)
+	key := d.Get("key").(string)
+	link := d.Get("link").(string)
+	if link != "" {
+		key = strings.TrimRight(key+"/"+link, "/")
+	}
 
-	object, err := sh.ObjectGet(cid)
+	object, err := sh.ObjectGet(key)
 	if err != nil {
 		return nil, logical.CodedError(http.StatusInternalServerError, err.Error())
 	}
