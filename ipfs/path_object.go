@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
@@ -25,6 +24,16 @@ var objectFields = map[string]*framework.FieldSchema{
 
 func objectPaths(b *IPFSBackend) []*framework.Path {
 	return []*framework.Path{
+		// The order of these paths matters: more specific ones need to be near
+		// the top, so that path matching does not short-circuit.
+		&framework.Path{
+			Pattern:      "object/" + framework.GenericNameRegex("key") + framework.OptionalParamRegex("link") + "/",
+			HelpSynopsis: "Return an IPFS object's links",
+			Fields:       objectFields,
+			Callbacks: map[logical.Operation]framework.OperationFunc{
+				logical.ListOperation: b.pathObjectLinks,
+			},
+		},
 		&framework.Path{
 			Pattern:      "object/" + framework.GenericNameRegex("key") + framework.OptionalParamRegex("link"),
 			HelpSynopsis: "Return an IPFS DAG node",
@@ -35,7 +44,7 @@ func objectPaths(b *IPFSBackend) []*framework.Path {
 		},
 		&framework.Path{
 			Pattern:      "object/" + framework.GenericNameRegex("key") + "/",
-			HelpSynopsis: "Return an IPFS object's links",
+			HelpSynopsis: "Return a list of an IPFS object's links",
 			Fields:       objectFields,
 			Callbacks: map[logical.Operation]framework.OperationFunc{
 				logical.ListOperation: b.pathObjectLinks,
@@ -55,9 +64,10 @@ func (b *IPFSBackend) pathObjectGet(ctx context.Context, req *logical.Request, d
 	key := d.Get("key").(string)
 	link := d.Get("link").(string)
 	if link != "" {
-		key = strings.TrimRight(key+"/"+link, "/")
+		key = key + "/" + link
 	}
 
+	// Get object from IPFS
 	object, err := sh.ObjectGet(key)
 	if err != nil {
 		return nil, logical.CodedError(http.StatusNotFound, err.Error())
@@ -89,14 +99,16 @@ func (b *IPFSBackend) pathObjectLinks(ctx context.Context, req *logical.Request,
 	key := d.Get("key").(string)
 	link := d.Get("link").(string)
 	if link != "" {
-		key = strings.TrimRight(key+"/"+link, "/")
+		key = key + "/" + link
 	}
 
+	// Get object from IPFS
 	object, err := sh.ObjectGet(key)
 	if err != nil {
 		return nil, logical.CodedError(http.StatusInternalServerError, err.Error())
 	}
 
+	// Pull just the links out of the DAG
 	hashes := make([]string, 0, len(object.Links))
 	for _, link := range object.Links {
 		hashes = append(hashes, link.Hash)
