@@ -22,7 +22,11 @@ When the client wants that data back from IPFS,
 2. Vault retrieves the requested IPFS object by CID through its local agent,
 3. The plugin attempts to decrypt the object's `Data` using the mount's decryption key.
 
-## Versioning
+## Clever Merkle Forest Joke
+
+:memo:
+
+## Versioning Immutable Objects
 
 Vault's Key-Value V2 store supports versioning secrets, but IFPS's objects are immutable. By layering Vault over IPFS (carefully), a huge possibility for IPFS opens up. Suppose a client wants to post an "update" to a Vault-managed IPFS CID `/ipfs/Qmabc123`:
 
@@ -38,12 +42,6 @@ Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly
 
 - This plugin can't track add, read, and encryption/decryption attempts made with encryption keys if they're removed from Vault.
 - It's impossible to rotate encryption keys in the traditional sense: you can re-encrypt objects with a new key, but objects encrypted with the old key(s) may remain on IPFS forever[\*](#deletion).
-
-### Deletion
-
-Deleting content from The Permanent Web [is complicated](https://github.com/ipfs/faq/issues/9), but theoretically possible. To summarize, if a node not under your influence chooses to replicate an object, you can't force it to take the object down. However, if all nodes that replicated the object decide to unpin or remove the object, the object will eventually fade from IPFS as it's garbage collected.
-
-When the IPFS mesh fails to retrieve data using an object's CID, the CID's content could be considered "deleted", although records in the ledger would prove _something_ existed.
 
 ## Policies
 
@@ -70,7 +68,7 @@ path "ipfs/metadata/*" {
 }
 
 // Allow changing references of managed objects, but only if the DAGs are part
-// of the network and Vault-managed (`create` is not allowed) already.
+// of the network and Vault-managed already (`create` is not allowed).
 path "ipfs/data/*" {
   capabilities = ["update"]
 }
@@ -81,14 +79,21 @@ path "ipfs/data/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG" {
   capabilities = ["list"]
 }
 
-// Allow reading a specific DAG link. Reading managed data read using an
-// alternate path/the Link's direct hash would be implicitly disallowed.
+// Allow reading a specific link of a DAG. Reading managed data using an
+// alternate path, such as from `/ipfs/data/<readme-hash>` would be implicitly
+// disallowed.
 path "ipfs/data/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme" {
   capabilities = ["read"]
 }
 ```
 
 ## Caveats
+
+### Deletion
+
+Deleting content from The Permanent Web [is complicated](https://github.com/ipfs/faq/issues/9), but theoretically possible. To summarize, if a node not under your influence chooses to pin/replicate an object, you can't force it to take the object down. However, if all nodes that replicated the object decide to unpin it, garbage collect it, or go offline, the object will eventually fade from IPFS.
+
+When the IPFS mesh fails to retrieve data using an object's CID, the CID's content could be considered "deleted", although the ledger would prove _something_ existed.
 
 ### Object Size
 
@@ -100,11 +105,11 @@ Vault is not meant to process binary data, only key-value pairs. For the sake of
 
 ## API
 
-The API was designed to resemble Vault's Key-Value V2 secrets engine API.
+The API was designed to resemble Vault's Key-Value V2 secrets engine API, and it does not account for all of IPFS's capabilities. IPFS's API itself is very full-featured, but is not yet stable.
 
 ### Read IPFS Engine Configuration
 
-This path retreives the current configuration for the IPFS backend at the given path.
+This path retrieves the current configuration for the IPFS backend at the given path.
 
 | Method | Path           | Produces                 |
 | ------ | -------------- | ------------------------ |
