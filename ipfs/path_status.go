@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
@@ -26,6 +27,14 @@ func (b *IPFSBackend) statusPaths() []*framework.Path {
 			HelpSynopsis: "Return the IPFS backend node's peer infos",
 			Callbacks: map[logical.Operation]framework.OperationFunc{
 				logical.ReadOperation: b.pathStatusPeersRead,
+				logical.ListOperation: b.pathStatusPeersList,
+			},
+		},
+		&framework.Path{
+			Pattern:      "status/peers/",
+			HelpSynopsis: "Return the IPFS backend node's peer list",
+			Callbacks: map[logical.Operation]framework.OperationFunc{
+				logical.ListOperation: b.pathStatusPeersList,
 			},
 		},
 	}
@@ -93,4 +102,29 @@ func (b *IPFSBackend) pathStatusPeersRead(ctx context.Context, req *logical.Requ
 	return &logical.Response{
 		Data: data,
 	}, nil
+}
+
+func (b *IPFSBackend) pathStatusPeersList(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+	if err := validateFields(req, d); err != nil {
+		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	sh := ipfs.NewShell(ipfsAddr)
+
+	peers, err := sh.SwarmPeers(ctx)
+	if err != nil {
+		return nil, logical.CodedError(http.StatusNotFound, err.Error())
+	}
+
+	// Restructure SwarmConnInfos to strings
+	peersList := make([]string, 0, len(peers.Peers))
+	for _, peer := range peers.Peers {
+		infos := []string{
+			peer.Addr,
+			peer.Peer,
+		}
+		peersList = append(peersList, strings.Join(infos, "/ipfs/"))
+	}
+
+	return logical.ListResponse(peersList), nil
 }
