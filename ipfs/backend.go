@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Use local node. The public gateway is slow.
 const ipfsAddr = "127.0.0.1:5001"
 
 // Factory creates a new usable instance of this secrets engine.
@@ -26,8 +27,11 @@ type IPFSBackend struct {
 func Backend(c *logical.BackendConfig) *IPFSBackend {
 	var b IPFSBackend
 	b.Backend = &framework.Backend{
-		Help:  ``,
-		Paths: framework.PathAppend(objectPaths(&b)),
+		Help: ``,
+		Paths: framework.PathAppend(
+			b.objectPaths(),
+			b.statusPaths(),
+		),
 		PathsSpecial: &logical.Paths{
 			Unauthenticated: []string{},
 		},

@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
-	shell "github.com/ipfs/go-ipfs-api"
+	ipfs "github.com/ipfs/go-ipfs-api"
 )
 
 var objectFields = map[string]*framework.FieldSchema{
@@ -22,7 +22,7 @@ var objectFields = map[string]*framework.FieldSchema{
 	},
 }
 
-func objectPaths(b *IPFSBackend) []*framework.Path {
+func (b *IPFSBackend) objectPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
@@ -59,7 +59,7 @@ func (b *IPFSBackend) pathObjectGet(ctx context.Context, req *logical.Request, d
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	sh := shell.NewShell(ipfsAddr)
+	sh := ipfs.NewShell(ipfsAddr)
 
 	key := d.Get("key").(string)
 	link := d.Get("link").(string)
@@ -94,7 +94,7 @@ func (b *IPFSBackend) pathObjectLinks(ctx context.Context, req *logical.Request,
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	sh := shell.NewShell(ipfsAddr)
+	sh := ipfs.NewShell(ipfsAddr)
 
 	key := d.Get("key").(string)
 	link := d.Get("link").(string)
