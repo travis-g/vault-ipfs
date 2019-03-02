@@ -22,7 +22,7 @@ var objectFields = map[string]*framework.FieldSchema{
 	},
 }
 
-func (b *IPFSBackend) objectPaths() []*framework.Path {
+func (b *Backend) objectPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
@@ -54,7 +54,7 @@ func (b *IPFSBackend) objectPaths() []*framework.Path {
 }
 
 // pathObjectGet returns an IpfsObject DAG node as returned by the network.
-func (b *IPFSBackend) pathObjectGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *Backend) pathObjectGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -89,7 +89,7 @@ func (b *IPFSBackend) pathObjectGet(ctx context.Context, req *logical.Request, d
 }
 
 // pathObjectLinks returns a list of hashes linked to by an IpfsObject.
-func (b *IPFSBackend) pathObjectLinks(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *Backend) pathObjectLinks(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}

@@ -1,0 +1,30 @@
+digraph layers {
+  rankdir="LR"
+
+  edge[style=invis]
+
+  subgraph cluster_0 {
+    {
+      rank=same
+      "/ipfs/object/QmYwAPJzv5", "/ipfs/object/QmPZ9gcCEp"
+    }
+    style=filled
+    color=lightgrey
+    node [style=filled,color=white]
+    "/ipfs/object/QmYwAPJzv5" -> "/readme" [style="dotted"]
+    label = "Vault"
+  }
+
+  subgraph cluster_1 {
+    label = "Merkle DAG Links/Chain"
+    node [style=filled]
+    "/ipfs/QmYwAPJzv5" -> "/ipfs/QmPZ9gcCEp" [label="./readme" style="solid"]
+
+    color=blue
+  }
+
+  edge[constraint=false style=solid]
+  "/ipfs/object/QmYwAPJzv5" -> "/ipfs/QmYwAPJzv5"
+  "/readme" -> "/ipfs/QmPZ9gcCEp"
+  "/ipfs/object/QmPZ9gcCEp" -> "/ipfs/QmPZ9gcCEp"
+}

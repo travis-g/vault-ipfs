@@ -46,7 +46,7 @@ echo "--> Authing"
 vault login root &>/dev/null
 
 echo "--> Building"
-go build -o "$SCRATCH/plugins/vault-ipfs"
+go build -o "$SCRATCH/plugins/vault-ipfs" ./cmd/vault-plugin-ipfs
 SHASUM=$(shasum -a 256 "$SCRATCH/plugins/vault-ipfs" | cut -d " " -f1)
 
 echo "--> Registering plugin"
