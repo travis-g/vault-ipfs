@@ -16,6 +16,11 @@ echo "--> Scratch dir"
 SCRATCH="$DIR/tmp"
 mkdir -p "$SCRATCH/plugins"
 
+echo "--> IPFS node"
+ipfs daemon &
+sleep 2
+IPFS_PID=$1
+
 echo "--> Vault server"
 echo "    Writing config"
 tee "$SCRATCH/vault.hcl" > /dev/null <<EOF
@@ -58,7 +63,7 @@ echo "--> Mouting plugin"
 vault secrets enable -path=ipfs -plugin-name=ipfs plugin
 
 echo "--> Reading out"
-vault read -field=Data ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme \
+vault read -field=data ipfs/dag/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme \
   | base64 -D
 
 echo "==> Ready!"

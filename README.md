@@ -2,37 +2,33 @@
 
 A Vault plugin for data and access management on IPFS.
 
-- Fine-grained controls for authorizing reading and writing asymmetrically encrypted IPFS objects.
-- TLS security from client to Vault, then encryption of data in-transit and at rest within IPFS.
+- Fine-grained controls for authorizing reading and writing asymmetrically encrypted IPFS data.
+- TLS security from client to Vault, then encryption of data in transit and at rest within IPFS.
 - Audit trails to indicate who attempted to access IPFS Merkle forest data using Vault as a proxy.
-
-<!-- - An abstraction layer that allows for "versioning" of IPFS objects managed by Vault. -->
+- An abstration layer that allows for "[versioning](#versioning-immutable-objects)" of IPFS objects managed by Vault.
 
 Essentially, this plugin was inspired by Vault's native asymmetric transit encryption capability and core key-value store:
 
 1. Plaintext is sent to Vault to be encrypted,
-2. Once it's encrypted, Vault creates and forwards DAGs to IPFS,
-3. Once it's ingested, the IPFS API returns the data's Content Identifier hash to Vault,
-4. Vault stores the hash in its key-value store for the IPFS mount, and returns the hash to the client for reference.
+2. Once it's encrypted, Vault uploads the data to IPFS,
+3. IPFS returns the data's Content Identifier hash to Vault,
+4. Vault stores the hash in its KV store for the IPFS mount, and returns the hash to the client for reference.
 
 The client can then discard the hash or record it, but Vault keeps the hash in a catalogue for the mount; at any time, an operator can determine which hashes on IPFS are being managed using a given mount.
 
-When a client wants Vault-managed encrypted data from IPFS,
+When a client wants Vault-encrypted data from IPFS,
 
-1. The client requests the encrypted DAG's hash through through Vault,
-2. Vault retrieves the requested IPFS object by hash through IPFS's API,
-3. The plugin decrypts the DAG's data using the mount's decryption key.
+1. The client requests the encrypted object's hash through Vault,
+2. Vault retrieves the requested IPFS object from an IPFS gateway,
+3. The plugin decrypts the node's data using the mount's decryption key and returns the decrypted data to the client.
 
 ## Clever Merkle Forest Joke
 
-The public IPFS Merkle forest is immense, and provisioning policies for individual DAGs of Merkle trees would lead to complex and unmaintainable policies. Additionally, if a Merkle DAG's hash is known, it can be queried through a public IPFS node and its full tree can be discovered.
-
-<!-- Is there reverse-lookup to discover what links to a DAG? -->
-
-Consider the well-known IPFS docs DAG `/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG`:
+IPFS was designed to store files, so use of it a company would assumedly require role-based access restriction. Consider the IPFS docs' UnixFS directory hash [`/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG`](https://ipfs.io/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG):
 
 ```console
 % ipfs ls QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG
+# hash                                         size name
 QmZTR5bcpQD7cFgTorqxZDYaew1Wqgfbd2ud9QqGPAkK2V 1688 about
 QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y 200  contact
 QmY5heUM5qgRubMDD1og9fhCPA6QdkMp3QCwd4s7gJsyE7 322  help
@@ -41,30 +37,50 @@ QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB 1102 readme
 QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ 1027 security-notes
 ```
 
-To allow clients to read the IPFS tree through Vault, `read` and `list` capability could be provisioned to the initial DAG, and access provisioned to all linked objects explicitly. We could create a Vault policy with distinct `path "ipfs/object/<hash>"` stanzas for each CID in the tree, totaling 7 stanzas to provision access.
+To represent the UnixFS node as a file tree:
 
-A much more maintainable solution supported by the plugin is to provision `read` and `list` on `path "ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/*"`: authorized clients can list the initial tree's links and read the data beneath them as far down as the Merkle tree extends. Using the `readme` link specifically, the globbed path allows implicit `read` and `list` access to `/ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` without creating explicit policy grants for the `readme`'s alternate `/ipfs/object/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB` path.
+```console
+QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG
+├── QmZTR5bcpQD7cFgTorqxZDYaew1Wqgfbd2ud9QqGPAkK2V  ./about
+├── QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y  ./contact
+├── QmY5heUM5qgRubMDD1og9fhCPA6QdkMp3QCwd4s7gJsyE7  ./help
+├── QmdncfsVm2h5Kqq9hPmU7oAVX2zTSVP3L869tgTbPYnsha  ./quick-start
+├── QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB  ./readme
+└── QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ  ./security-notes
+```
 
-<!-- Restriction policies -->
+Also of note:
+
+- The public IPFS Merkle forest is immense, and provisioning policies for individual nodes and links of IPFS Merkle trees would lead to complex and unmaintainable policies.
+- The `data` within the UnixFS nodes may not be plaintext, but for a UnixFS tree to be human-friendly the names of `links` must be plaintext.
+
+To allow clients to read the IPFS docs tree through Vault, `read` and `list` capability could be provisioned to the initial DAG, and separate stanzas provisioned to all linked objects explicitly. The discrete paths approach using `path "ipfs/object/<hash>"` stanzas for each CID in the tree would total 7 stanzas to provision complete read-only access. If a role needs access to multiple trees, its policy would quickly spiral out of control.
+
+This plugin support of [IPFS's DHT link resolution]() functionality. With IPFS, a request for `/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` is resolved by the IPFS network to be a request for the `readme` link's CID. Therefore, a maintainable solution for administrator is to provision `read` and `list` on the root node of the tree and utilize globbing to provision the rest: `path "ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/*"`.
+
+Globbed CID policy paths allow clients to list the root's links and read the data beneath it as far down as the Merkle tree extends: access is to one tree only, as far as it extends. If required, `deny` capability can be used to restrict tree nodes ad-hoc. Using the `readme` link example specifically, the globbed path allows implicit `read` and `list` access to `/ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` without requiring explicit policy grants for the `readme`'s direct `/ipfs/object/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB` path.
 
 ## Versioning Immutable Objects
 
-Vault's key-value V2 store supports versioning secrets, but objects in IFPS's Merkle forest are immutable. By layering Vault as a gateway over IPFS (carefully), a huge possibility for IPFS DAG meta-versioning opens up. Suppose a client is authorized to post an "update" to a Vault-managed IPFS DAG `/ipfs/Qmabc123`:
+Vault's KV store supports versioning secrets, but objects in IFPS's Merkle forest are immutable. By leveraging Vault as a gateway over IPFS (carefully), a huge possibility for IPFS data meta-versioning opens up. Suppose a client is authorized to post an "update" to a Vault-managed IPFS DAG `/ipfs/Qmabc123`:
 
 1. The client crafts a new IPFS DAG and `PUT`s the data against Vault at `/ipfs/data/Qmabc123`.
 2. Vault encrypts the data and uploads the new DAG to IPFS. Lets say the new DAG is `/ipfs/Qmxyz789`.
-3. _In its catalogue_, Vault creates a new version of `ref Qmabc123`, and points this new version to `ref Qmxyz789`.
-4. When a `GET` request for `/ipfs/data/Qmabc123` is made without a requested version, Vault reads its catalogue, discovers `ref Qmxyz789`, and gets, decrypts, and returns IPFS DAG `/ipfs/Qmxyz789` by default instead of `/ipfs/Qmabc123`.
+3. In its metadata store, Vault creates version 2 of `ref Qmabc123`, and points this new version to `ref Qmxyz789`.
+4. When a `GET` request for `/ipfs/data/Qmabc123` is made without a requested version, Vault reads its catalogue, discovers that it points to `ref Qmxyz789`, and queries IPFS, decrypts, and returns `/ipfs/Qmxyz789` by default instead of `/ipfs/Qmabc123`.
 
 Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly will be denied, so unless the IPFS object is accessed through Vault at the initial reference of `Qmabc123` the value returned will remain encrypted at rest on the network. A Vault operator can "tidy" these references and their versions later by traversing managed objects, importing new DAGs directly to the catalogue, provisioning the appropriate policy updates and purging the outdated metadata from Vault.
 
+### IPNS and DNSLink
+
+[IPNS](https://docs.ipfs.io/guides/concepts/ipns/) and [DNSLink](https://docs.ipfs.io/guides/concepts/dnslink/) are two well-known methods of assigning mutable references to immutable IPFS CIDs. However, IPNS utilizes the ID of the IPFS node itself to publish a single tree, and DNSLink extends that by having human-readable DNS TXT records point to IPFS entry. Use of either over a KV store/proxy would have drawbacks.
+
 ## Warnings
 
-- Inter-IFPS node communication uses custom encryption that has not yet been audited. The mechanism is not SSL or TLS, but there is community discussion around [implementing TLS 1.3]().
+- Inter-IFPS node communication uses custom encryption that has not yet been audited. The mechanism is not SSL or TLS, but there is community discussion around implementing TLS 1.3.
 - This plugin can't record encryption/decryption attempts made with using a backend's encryption keys if they are removed from Vault.
-- It's impossible to rotate encryption keys for Vault-managed IPFS data in the traditional sense: you can re-encrypt objects with a new key, but objects encrypted with the old key(s) may remain on IPFS forever[\*](#deletion).
-- Content stored on IPFS is not natively encrypted at rest. However, this plugin mitigates that problem by asymmetrically encrypting the data it will manage prior to uploading.
-- File and directory names are uploaded to IPFS in plaintext.
+- It's impossible to rotate encryption keys for Vault-managed IPFS data in the traditional sense: you can re-encrypt objects' data with a new key, but objects encrypted with the old key(s) may remain on IPFS forever[\*](#deletion).
+- File and directory names are uploaded to the IPFS in plaintext. If a DAG's hash is known and public IPFS, it can be queried through any IPFS node and its full tree can be discovered.
 
 ## Policies
 
@@ -120,10 +136,10 @@ path "ipfs/data/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme" {
 // linked within it. The referenced link cannot be accessed (read and decrypted)
 // through Vault unless permissions are circumvented with access to another tree
 // that contains the node or by a policy on the DAG's direct hash.
-path "ipfs/data/Qmb8wsGZNXt5VXZh1pEmYynjB6Euqpq3HYyeAdw2vScTkQ/*" {
+path "ipfs/object/Qmb8wsGZNXt5VXZh1pEmYynjB6Euqpq3HYyeAdw2vScTkQ/*" {
   capabilities = ["read", "list"]
 }
-path "ipfs/data/Qmb8wsGZNXt5VXZh1pEmYynjB6Euqpq3HYyeAdw2vScTkQ/838 - Incident/*" {
+path "ipfs/object/Qmb8wsGZNXt5VXZh1pEmYynjB6Euqpq3HYyeAdw2vScTkQ/838 - Incident/*" {
   capabilities = ["deny"]
 }
 ```
@@ -148,7 +164,7 @@ Vault is not meant to process binary data, only key-value pairs. For the sake of
 
 ## API
 
-The API was designed to resemble Vault's Key-Value V2 secrets engine API, and it does not account for all of IPFS's capabilities. IPFS's API itself is very full-featured, but is not yet stable.
+The API was designed to resemble Vault's Key-Value V2 secrets engine API, and it does not account for all of IPFS's capabilities. It is biased toward newer directions the IPFS community has taken. IPFS's API itself is very full-featured, but is not yet stable.
 
 ### Read IPFS Engine Configuration
 
@@ -160,7 +176,7 @@ This path retrieves the current configuration for the IPFS backend at the given 
 
 ### Get Object
 
-Retrieve an object DAG directly from IPFS.
+Retrieve an object directly from IPFS.
 
 | Method | Path                         | Produces                 |
 | ------ | ---------------------------- | ------------------------ |
@@ -313,7 +329,10 @@ Unpins an object from the plugin's underlying IPFS daemon's local storage. Unpin
 
 ## Links
 
+- [Inter-Planetary Linked Data](https://ipld.io/), the next generation data model used by IPFS.
 - [Archives on IPFS](https://archives.ipfs.io/)
+- [IPFS Cluster](https://cluster.ipfs.io/), a standalone for managing pinsets within a cluster of IPFS daemons/IPFS datacenter.
+- [IPFS distributions](https://dist.ipfs.io/) for the IPFS project's official software.
 
 ## License
 

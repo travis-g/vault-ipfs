@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/vault/helper/pluginutil"
 	"github.com/hashicorp/vault/logical/plugin"
-	"github.com/travis-g/vault-ipfs/ipfs"
+	"github.com/travis-g/vault-ipfs"
 )
 
 func main() {

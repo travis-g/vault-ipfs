@@ -2,3 +2,7 @@ vault-ipfs
 *.exe
 
 /tmp
+/ipfs
+.terraform
+*.tfstate
+*.tfstate.backup

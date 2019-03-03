@@ -22,7 +22,7 @@ var objectFields = map[string]*framework.FieldSchema{
 	},
 }
 
-func (b *Backend) objectPaths() []*framework.Path {
+func (b *backend) objectPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
@@ -53,8 +53,13 @@ func (b *Backend) objectPaths() []*framework.Path {
 	}
 }
 
-// pathObjectGet returns an IpfsObject DAG node as returned by the network.
-func (b *Backend) pathObjectGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+/*
+pathObjectGet returns an IpfsObject DAG node as returned by the network.
+
+- Use encoding/json to decode strings, ex.
+  https://ipfs.infura.io:5001/api/v0/object/get?arg=QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG
+*/
+func (b *backend) pathObjectGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -89,7 +94,7 @@ func (b *Backend) pathObjectGet(ctx context.Context, req *logical.Request, d *fr
 }
 
 // pathObjectLinks returns a list of hashes linked to by an IpfsObject.
-func (b *Backend) pathObjectLinks(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *backend) pathObjectLinks(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}

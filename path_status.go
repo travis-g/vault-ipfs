@@ -11,7 +11,7 @@ import (
 	ipfs "github.com/ipfs/go-ipfs-api"
 )
 
-func (b *Backend) statusPaths() []*framework.Path {
+func (b *backend) statusPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
@@ -48,7 +48,7 @@ type StatusPeers struct {
 	Peers *ipfs.SwarmConnInfos
 }
 
-func (b *Backend) pathStatusGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *backend) pathStatusGet(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -76,7 +76,7 @@ func (b *Backend) pathStatusGet(ctx context.Context, req *logical.Request, d *fr
 	}, nil
 }
 
-func (b *Backend) pathStatusPeersRead(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *backend) pathStatusPeersRead(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -104,7 +104,7 @@ func (b *Backend) pathStatusPeersRead(ctx context.Context, req *logical.Request,
 	}, nil
 }
 
-func (b *Backend) pathStatusPeersList(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *backend) pathStatusPeersList(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	if err := validateFields(req, d); err != nil {
 		return nil, logical.CodedError(http.StatusUnprocessableEntity, err.Error())
 	}
