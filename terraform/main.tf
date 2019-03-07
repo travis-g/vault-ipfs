@@ -2,7 +2,9 @@ variable "ipfs_version" {
   default = "latest"
 }
 
-variable "ipfs_instance_count" {}
+variable "ipfs_instance_count" {
+  default = 1
+}
 variable "ipfs_storage_max" {}
 
 resource "docker_image" "ipfs" {
@@ -67,9 +69,9 @@ resource "docker_container" "ipfs_server" {
   }
 
   # Swarm WebSockets (TODO: overlaps)
-  # ports {
-  #   internal = "8081"
-  #   external = "8081"
-  #   protocol = "tcp"
-  # }
+  ports {
+    internal = "8081"
+    external = "8081"
+    protocol = "tcp"
+  }
 }
