@@ -6,3 +6,4 @@ vault-ipfs
 .terraform
 *.tfstate
 *.tfstate.backup
+*.info

@@ -1,6 +1,6 @@
 // `importer` is an example policy designed to import objects into Vault through
-// plugin's API. The policy also grants the ability to proxy reads of the entire
-// IPFS Merkle forest.
+// the plugin's API. The policy also grants the ability to proxy reads of the
+// entire IPFS Merkle forest.
 
 // Read any node of the IPFS Merkle forest.
 path "ipfs/object/*" {
@@ -15,4 +15,9 @@ path "ipfs/data" {
 // Enumerate objects under management.
 path "ipfs/data/*" {
   capabilities = ["list"]
+}
+
+// Encrypt data with the transit backend.
+path "transit/encrypt/local" {
+  capabilities = ["update"]
 }

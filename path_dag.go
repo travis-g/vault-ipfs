@@ -14,6 +14,7 @@ import (
 	"github.com/fatih/structs"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
+	"github.com/ipfs/go-cid"
 )
 
 var dagFields = map[string]*framework.FieldSchema{
@@ -140,6 +141,10 @@ func (b *backend) pathDAGGet(ctx context.Context, req *logical.Request, d *frame
 
 func (b *backend) pathDAGList(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	key := d.Get("ref").(string)
+	_, err := cid.Parse(key)
+	if err != nil {
+		return logical.ErrorResponse("invalid CID"), nil
+	}
 	link := d.Get("link").(string)
 	if link != "" {
 		key = strings.Join([]string{key, link}, "/")

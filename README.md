@@ -5,7 +5,8 @@ A Vault plugin for data and access management on IPFS.
 - Fine-grained controls for authorizing reading and writing asymmetrically encrypted IPFS data.
 - TLS security from client to Vault, then encryption of data in transit and at rest within IPFS.
 - Audit trails to indicate who attempted to access IPFS Merkle forest data using Vault as a proxy.
-- An abstration layer that allows for "[versioning](#versioning-immutable-objects)" of IPFS objects managed by Vault.
+
+<!-- - An abstration layer that allows for "[versioning](#versioning-immutable-objects)" of IPFS objects managed by Vault. -->
 
 Essentially, this plugin was inspired by Vault's native asymmetric transit encryption capability and core key-value store:
 
@@ -37,18 +38,6 @@ QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB 1102 readme
 QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ 1027 security-notes
 ```
 
-To represent the UnixFS node as a file tree:
-
-```console
-QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG
-├── QmZTR5bcpQD7cFgTorqxZDYaew1Wqgfbd2ud9QqGPAkK2V  ./about
-├── QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y  ./contact
-├── QmY5heUM5qgRubMDD1og9fhCPA6QdkMp3QCwd4s7gJsyE7  ./help
-├── QmdncfsVm2h5Kqq9hPmU7oAVX2zTSVP3L869tgTbPYnsha  ./quick-start
-├── QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB  ./readme
-└── QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ  ./security-notes
-```
-
 Also of note:
 
 - The public IPFS Merkle forest is immense, and provisioning policies for individual nodes and links of IPFS Merkle trees would lead to complex and unmaintainable policies.
@@ -60,7 +49,7 @@ This plugin supports [IPFS's DHT link resolution]() functionality. With IPFS, a 
 
 Globbed CID policy paths allow clients to list the root's links and read the data beneath it as far down as the Merkle tree extends: access is to one tree only, as far as it extends. If required, `deny` capability can be used to restrict tree nodes ad-hoc. Using the `readme` link example specifically, the globbed path allows implicit `read` and `list` access to `/ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` without requiring explicit policy grants for the `readme`'s direct `/ipfs/object/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB` path.
 
-## Versioning Immutable Objects
+<!-- ## Versioning Immutable Objects
 
 Vault's KV store supports versioning secrets, but objects in IFPS's Merkle forest are immutable. By leveraging Vault as a gateway over IPFS (carefully), a huge possibility for IPFS data meta-versioning opens up. Suppose a client is authorized to post an "update" to a Vault-managed IPFS DAG `/ipfs/Qmabc123`:
 
@@ -69,7 +58,7 @@ Vault's KV store supports versioning secrets, but objects in IFPS's Merkle fores
 3. In its metadata store, Vault creates version 2 of `ref Qmabc123`, and points this new version to `ref Qmxyz789`.
 4. When a `GET` request for `/ipfs/data/Qmabc123` is made without a requested version, Vault reads its catalogue, discovers that it points to `ref Qmxyz789`, and queries IPFS, decrypts, and returns `/ipfs/Qmxyz789` by default instead of `/ipfs/Qmabc123`.
 
-Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly will be denied, so unless the IPFS object is accessed through Vault at the initial reference of `Qmabc123` the value returned will remain encrypted at rest on the network. A Vault operator can "tidy" these references and their versions later by traversing managed objects, importing new DAGs directly to the catalogue, provisioning the appropriate policy updates and purging the outdated metadata from Vault.
+Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly will be denied, so unless the IPFS object is accessed through Vault at the initial reference of `Qmabc123` the value returned will remain encrypted at rest on the network. A Vault operator can "tidy" these references and their versions later by traversing managed objects, importing new DAGs directly to the catalogue, provisioning the appropriate policy updates and purging the outdated metadata from Vault. -->
 
 ### IPNS and DNSLink
 
@@ -156,7 +145,7 @@ When the IPFS mesh fails to retrieve data using an object's CID, the CID's conte
 
 Although Vault won't store the IPFS object data itself, it still needs to process the full Data payload to encrypt or decrypt it. Vault's TCP listeners are configured to deny payloads above 32MB by default to help mitigate denial-of-service attacks. The maximum size can be adjusted per-listener.
 
-The plugin's API does not support pulling a full Merkle tree in a single request, but if individual DAGs requested through Vault surpass 32MB in size the [`max_request_size`](https://www.vaultproject.io/docs/configuration/listener/tcp.html#max_request_size) parameter can be adjusted.
+The plugin's API does not support pulling a full Merkle tree in a single request, but if individual DAGs requested through Vault surpass 32MB in size the [`max_request_size`](https://www.vaultproject.io/docs/configuration/listener/tcp.html#max_request_size) parameter would need to be adjusted.
 
 ### Encoding
 
@@ -164,9 +153,17 @@ Vault is not meant to process binary data, only key-value pairs. For the sake of
 
 ## API
 
-The API was designed to resemble Vault's Key-Value V2 secrets engine API, and it does not account for all of IPFS's capabilities. It is biased toward newer directions the IPFS community has taken. IPFS's API itself is very full-featured, but is not yet stable.
+The API was designed to resemble Vault's Key-Value V2 secrets engine API. It does not account for all of IPFS's capabilities. It is biased toward newer directions the IPFS community has taken. IPFS's API itself is very full-featured, but is not yet stable.
 
-### Read IPFS Engine Configuration
+### Set IPFS Configuration
+
+This path retrieves sets the configuration for the IPFS backend.
+
+| Method | Path           | Produces                 |
+| ------ | -------------- | ------------------------ |
+| `POST`  | `/ipfs/config` | `204 (application/json)` |
+
+### Read IPFS Configuration
 
 This path retrieves the current configuration for the IPFS backend at the given path.
 
@@ -300,6 +297,14 @@ Objects can't be explicitly destroyed on "The Permanent Web": it would be mislea
 #### Parameters
 
 - `hash` `(string: <required>)` - Hash of content for which to purge metadata.
+
+### List Pins
+
+Lists the pin set of the targeted IPFS node.
+
+| Method | Path         | Produces                 |
+| ------ | ------------ | ------------------------ |
+| `LIST` | `/ipfs/pin/` | `200 (application/json)` |
 
 ### Pin Object
 

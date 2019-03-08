@@ -5,6 +5,7 @@ variable "ipfs_version" {
 variable "ipfs_instance_count" {
   default = 1
 }
+
 variable "ipfs_storage_max" {}
 
 resource "docker_image" "ipfs" {
@@ -31,6 +32,7 @@ resource "docker_container" "ipfs_server" {
 
   env = [
     "IPFS_LOGGING=info",
+    "IPFS_PROFILE=server",
   ]
 
   command  = ["daemon", "--migrate=true"]
@@ -38,13 +40,18 @@ resource "docker_container" "ipfs_server" {
   must_run = true
 
   volumes {
-    host_path      = "${path.module}/../ipfs/ipfs${count.index}"
-    container_path = "/ipfs/data"
+    host_path      = "${path.module}/../ipfs/data${count.index}"
+    container_path = "/data/ipfs"
+  }
+
+  volumes {
+    host_path      = "${path.module}/../ipfs/staging${count.index}"
+    container_path = "/export"
   }
 
   upload {
     content = "${element(data.template_file.ipfs_config.*.rendered, count.index)}"
-    file    = "/ipfs/data/config"
+    file    = "/data/ipfs/config"
   }
 
   # Daemon API, do not expose publicly
