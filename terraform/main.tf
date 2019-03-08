@@ -75,7 +75,7 @@ resource "docker_container" "ipfs_server" {
     protocol = "tcp"
   }
 
-  # Swarm WebSockets (TODO: overlaps)
+  # Swarm WebSockets (TODO: overlaps with count > 1)
   ports {
     internal = "8081"
     external = "8081"
