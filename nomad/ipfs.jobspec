@@ -1,0 +1,50 @@
+job "ipfs" {
+  type = "service"
+
+  # run on -dev datacenter
+  datacenters = ["dc1"]
+
+  meta {}
+
+  group "daemon" {
+    task "server" {
+      driver = "docker"
+
+      env {
+        IPFS_LOGGING = "info"
+      }
+
+      # do the thing
+      config {
+        image = "ipfs/go-ipfs:latest"
+
+        # start the daemon
+        args = [
+          "daemon",
+          "--migrate=true",
+        ]
+
+        volumes = []
+      }
+
+      resources {
+        network {
+          mbits = 200
+
+          // use a config.port_map
+          port "http" {
+            static = 8080
+          }
+
+          port "api" {
+            static = 5001
+          }
+
+          port "swarm" {
+            static = 4001
+          }
+        }
+      }
+    }
+  }
+}
