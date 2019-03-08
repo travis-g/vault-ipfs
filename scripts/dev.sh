@@ -25,6 +25,12 @@ echo "--> Vault server"
 echo "    Writing config"
 tee "$SCRATCH/vault.hcl" > /dev/null <<EOF
 plugin_directory = "$SCRATCH/plugins"
+ui = true
+
+listener "tcp" {
+  max_request_duration = "30s" # duration allowed before Vault cancels request
+  max_request_size = 0         # disable request size limit (bad)
+}
 EOF
 
 echo "    Envvars"
@@ -55,7 +61,7 @@ go build -o "$SCRATCH/plugins/vault-ipfs" ./cmd/vault-plugin-ipfs
 SHASUM=$(shasum -a 256 "$SCRATCH/plugins/vault-ipfs" | cut -d " " -f1)
 
 echo "--> Registering plugin"
-vault write sys/plugins/catalog/ipfs \
+vault write sys/plugins/catalog/secret/ipfs \
   sha_256="$SHASUM" \
   command="vault-ipfs"
 
