@@ -1,6 +1,8 @@
 # vault-ipfs
 
-A Vault plugin for data and access management on IPFS.
+[![Go Report Card](https://goreportcard.com/badge/github.com/travis-g/vault-ipfs)](https://goreportcard.com/report/github.com/travis-g/vault-ipfs)
+
+A [Hashicorp Vault](https://www.vaultproject.io/) plugin for data and access management on [IPFS](https://ipfs.io/).
 
 - Fine-grained controls for authorizing reading and writing asymmetrically encrypted IPFS data.
 - TLS security from client to Vault, then encryption of data in transit and at rest within IPFS.
