@@ -6,26 +6,26 @@ import (
 )
 
 var configFields = map[string]*framework.FieldSchema{
-	"address": &framework.FieldSchema{
+	"address": {
 		Type:        framework.TypeString,
 		Description: "[Required] address of the IPFS API to use",
 	},
-	"format": &framework.FieldSchema{
+	"format": {
 		Type:        framework.TypeString,
 		Default:     "dag-pb",
 		Description: "format that the object will be added as",
 	},
-	"input-enc": &framework.FieldSchema{
+	"input-enc": {
 		Type:        framework.TypeString,
 		Default:     "json",
 		Description: "format that the input object will be",
 	},
-	"pin": &framework.FieldSchema{
+	"pin": {
 		Type:        framework.TypeBool,
 		Default:     true,
 		Description: "pin the object when added",
 	},
-	"hash": &framework.FieldSchema{
+	"hash": {
 		Type:        framework.TypeString,
 		Default:     "sha2-256",
 		Description: "multihash hashing algorithm to use",
@@ -34,7 +34,7 @@ var configFields = map[string]*framework.FieldSchema{
 
 func (b *backend) configPaths() []*framework.Path {
 	return []*framework.Path{
-		&framework.Path{
+		{
 			Pattern:      "config",
 			HelpSynopsis: "Configures backend settings applied to all data",
 			Fields:       configFields,

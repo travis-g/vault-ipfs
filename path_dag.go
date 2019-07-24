@@ -18,36 +18,36 @@ import (
 )
 
 var dagFields = map[string]*framework.FieldSchema{
-	"ref": &framework.FieldSchema{
+	"ref": {
 		Type:        framework.TypeString,
 		Description: "DAG node to pull and serialize from IPFS",
 	},
-	"link": &framework.FieldSchema{
+	"link": {
 		Type:        framework.TypeString,
 		Description: "optional link of DAG node to pull",
 	},
 }
 var dagPutFields = map[string]*framework.FieldSchema{
-	"plaintext": &framework.FieldSchema{
+	"plaintext": {
 		Type:        framework.TypeString,
 		Description: "base64 encoded plaintext data to upload",
 	},
-	"format": &framework.FieldSchema{
+	"format": {
 		Type:        framework.TypeString,
 		Default:     "dag-cbor",
 		Description: "format that the object will be added as",
 	},
-	"input-enc": &framework.FieldSchema{
+	"input-enc": {
 		Type:        framework.TypeString,
 		Default:     "json",
 		Description: "format that the input object will be",
 	},
-	"pin": &framework.FieldSchema{
+	"pin": {
 		Type:        framework.TypeBool,
 		Default:     true,
 		Description: "pin the object when added",
 	},
-	"hash": &framework.FieldSchema{
+	"hash": {
 		Type:        framework.TypeString,
 		Default:     "sha2-256",
 		Description: "multihash hashing algorithm to use",
@@ -58,7 +58,7 @@ func (b *backend) dagPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
-		&framework.Path{
+		{
 			Pattern:      "dag/" + framework.GenericNameRegex("ref") + framework.OptionalParamRegex("link") + "/",
 			HelpSynopsis: "Return an IPLD node's links",
 			Fields:       dagFields,
@@ -66,7 +66,7 @@ func (b *backend) dagPaths() []*framework.Path {
 				logical.ListOperation: b.pathDAGList,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "dag/" + framework.GenericNameRegex("ref") + framework.OptionalParamRegex("link"),
 			HelpSynopsis: "Return an IPLD node",
 			Fields:       dagFields,
@@ -74,7 +74,7 @@ func (b *backend) dagPaths() []*framework.Path {
 				logical.ReadOperation: b.pathDAGGet,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "dag/" + framework.GenericNameRegex("ref") + "/",
 			HelpSynopsis: "Return a list of a node's links",
 			Fields:       dagFields,
@@ -82,7 +82,7 @@ func (b *backend) dagPaths() []*framework.Path {
 				logical.ListOperation: b.pathDAGList,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "dag",
 			HelpSynopsis: "Return a list of a node's links",
 			Fields:       dagPutFields,

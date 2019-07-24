@@ -12,11 +12,11 @@ import (
 )
 
 var objectFields = map[string]*framework.FieldSchema{
-	"key": &framework.FieldSchema{
+	"key": {
 		Type:        framework.TypeString,
 		Description: "DAG node to pull and serialize from IPFS",
 	},
-	"link": &framework.FieldSchema{
+	"link": {
 		Type:        framework.TypeString,
 		Description: "optional link of DAG node to pull",
 	},
@@ -26,7 +26,7 @@ func (b *backend) objectPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
-		&framework.Path{
+		{
 			Pattern:      "object/" + framework.GenericNameRegex("key") + framework.OptionalParamRegex("link") + "/",
 			HelpSynopsis: "Return an IPFS object's links",
 			Fields:       objectFields,
@@ -34,7 +34,7 @@ func (b *backend) objectPaths() []*framework.Path {
 				logical.ListOperation: b.pathObjectLinks,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "object/" + framework.GenericNameRegex("key") + framework.OptionalParamRegex("link"),
 			HelpSynopsis: "Return an IPFS DAG node",
 			Fields:       objectFields,
@@ -42,7 +42,7 @@ func (b *backend) objectPaths() []*framework.Path {
 				logical.ReadOperation: b.pathObjectGet,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "object/" + framework.GenericNameRegex("key") + "/",
 			HelpSynopsis: "Return a list of an IPFS object's links",
 			Fields:       objectFields,

@@ -8,7 +8,7 @@ func secretKey(b *backend) *framework.Secret {
 	return &framework.Secret{
 		Type: SecretIPFSKeyType,
 		Fields: map[string]*framework.FieldSchema{
-			"key": &framework.FieldSchema{
+			"key": {
 				Type:        framework.TypeString,
 				Description: "Encryption key",
 			},

@@ -15,14 +15,14 @@ func (b *backend) statusPaths() []*framework.Path {
 	return []*framework.Path{
 		// The order of these paths matters: more specific ones need to be near
 		// the top, so that path matching does not short-circuit.
-		&framework.Path{
+		{
 			Pattern:      "status",
 			HelpSynopsis: "Return the IPFS backend's status",
 			Callbacks: map[logical.Operation]framework.OperationFunc{
 				logical.ReadOperation: b.pathStatusGet,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "status/peers",
 			HelpSynopsis: "Return the IPFS backend node's peer infos",
 			Callbacks: map[logical.Operation]framework.OperationFunc{
@@ -30,7 +30,7 @@ func (b *backend) statusPaths() []*framework.Path {
 				logical.ListOperation: b.pathStatusPeersList,
 			},
 		},
-		&framework.Path{
+		{
 			Pattern:      "status/peers/",
 			HelpSynopsis: "Return the IPFS backend node's peer list",
 			Callbacks: map[logical.Operation]framework.OperationFunc{
