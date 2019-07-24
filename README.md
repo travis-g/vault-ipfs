@@ -41,15 +41,18 @@ QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ 1027 security-notes
 Also of note:
 
 - The public IPFS Merkle forest is immense, and provisioning policies for individual nodes and links of IPFS Merkle trees would lead to complex and unmaintainable policies.
-- The `data` within the UnixFS nodes may not be plaintext, but for a UnixFS tree to be human-friendly the names of `links` must be plaintext.
+- The `data` within the UnixFS nodes may not be plaintext, but for a UnixFS tree to be human-friendly the names of links (`/readme`, `/contact`) must be plaintext.
 
 To allow clients to read the IPFS docs tree through Vault, `read` and `list` capability could be provisioned to the initial DAG, and separate stanzas provisioned to all linked objects explicitly. The discrete paths approach using `path "ipfs/object/<hash>"` stanzas for each CID in the tree would total 7 stanzas to provision complete read-only access. If a role needs access to multiple trees, its policy would quickly spiral out of control.
 
-This plugin supports [IPFS's DHT link resolution]() functionality. With IPFS, a request for `/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` is resolved by the IPFS network to be a request for the `readme` link's CID. Therefore, a maintainable solution for administrator is to provision `read` and `list` on the root node of the tree and utilize globbing to provision the rest of the tree implicitly: `path "ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/*"`.
+This plugin supports [IPFS's DHT link resolution]() functionality. With IPFS, a request for `/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` is resolved by the IPFS network to be a request for the `readme` link's CID. Therefore, a maintainable solution for administrator is to provision `read` and `list` on the root node of the tree and utilize globbing to provision the rest of the tree implicitly: `path "ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/*"`. Vault would then internally map to IPFS as follows:
+
+![dag-layers](./docs/dag-layers.svg)
 
 Globbed CID policy paths allow clients to list the root's links and read the data beneath it as far down as the Merkle tree extends: access is to one tree only, as far as it extends. If required, `deny` capability can be used to restrict tree nodes ad-hoc. Using the `readme` link example specifically, the globbed path allows implicit `read` and `list` access to `/ipfs/object/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme` without requiring explicit policy grants for the `readme`'s direct `/ipfs/object/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB` path.
 
-<!-- ## Versioning Immutable Objects
+<!--
+### Versioning Immutable Objects
 
 Vault's KV store supports versioning secrets, but objects in IFPS's Merkle forest are immutable. By leveraging Vault as a gateway over IPFS (carefully), a huge possibility for IPFS data meta-versioning opens up. Suppose a client is authorized to post an "update" to a Vault-managed IPFS DAG `/ipfs/Qmabc123`:
 
@@ -58,7 +61,8 @@ Vault's KV store supports versioning secrets, but objects in IFPS's Merkle fores
 3. In its metadata store, Vault creates version 2 of `ref Qmabc123`, and points this new version to `ref Qmxyz789`.
 4. When a `GET` request for `/ipfs/data/Qmabc123` is made without a requested version, Vault reads its catalogue, discovers that it points to `ref Qmxyz789`, and queries IPFS, decrypts, and returns `/ipfs/Qmxyz789` by default instead of `/ipfs/Qmabc123`.
 
-Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly will be denied, so unless the IPFS object is accessed through Vault at the initial reference of `Qmabc123` the value returned will remain encrypted at rest on the network. A Vault operator can "tidy" these references and their versions later by traversing managed objects, importing new DAGs directly to the catalogue, provisioning the appropriate policy updates and purging the outdated metadata from Vault. -->
+Until access is provisioned, reads for `/ipfs/data/Qmxyz789` from Vault directly will be denied: unless the IPFS object is accessed through Vault at the initial reference of `Qmabc123` the value returned will remain encrypted at rest on the network. A Vault operator can "tidy" these references and their versions later by traversing managed objects, importing new DAGs directly to the catalogue, provisioning the appropriate policy updates and purging the outdated metadata from Vault.
+-->
 
 ### IPNS and DNSLink
 
@@ -341,4 +345,4 @@ Unpins an object from the plugin's underlying IPFS daemon's local storage. Unpin
 
 ## License
 
-:memo:
+MIT License, see [`LICENSE`](./LICENSE)
